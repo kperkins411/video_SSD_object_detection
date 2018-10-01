@@ -10,15 +10,13 @@ a simple first model that predicts what object is located in each cell of a 4x4 
 k= number of default boxes
 '''
 class StdConv(torch.nn.Module):
-    def __init__(self, nin, nout, stride=2, drop=0.1):
+    def __init__(self, nin, nout,kernel_size=3, stride=2, drop=0.1,padding=1):
         '''
-        :param nin: the depth of the input wxhxd
-        :param nout: the depth of the output wxhxd
-        :param stride:
-        :param drop:
+        :param nin: the depth of the input w*h*nin
+        :param nout: the depth of the output w*h*nout
         '''
         super().__init__()
-        self.conv = torch.nn.Conv2d(nin, nout, kernel_size=3, stride=stride, padding=1)
+        self.conv = torch.nn.Conv2d(nin, nout, kernel_size=kernel_size, stride=stride, padding=padding)
         self.bn = torch.nn.BatchNorm2d(nout)
         self.drop = torch.nn.Dropout(drop)
 
@@ -32,13 +30,20 @@ def flatten_conv(x, k):
 
 class OutConv(torch.nn.Module):
     def __init__(self, k, nin, bias,numb_categories):
+        '''
+        :param k: number of default boxes(anchor boxes), see SSD paper
+        :param nin:
+        :param bias: bias per neuron
+        :param numb_categories:
+        '''
         super().__init__()
         self.k = k
-        #for the classes
-        self.oconv1 = torch.nn.Conv2d(nin, numb_categories * k, 3, padding=1)
 
-        #for the bounding boxes
-        self.oconv2 = torch.nn.Conv2d(nin, 4 * k, 3, padding=1)
+        #classes
+        self.oconv1 = torch.nn.Conv2d(nin, numb_categories * k, kernel_size=3, padding=1)
+
+        #default boxes
+        self.oconv2 = torch.nn.Conv2d(nin, 4 * k, kernel_size=3, padding=1)
         self.oconv1.bias.data.zero_().add_(bias)
 
     def forward(self, x):
